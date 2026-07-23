@@ -1,0 +1,6 @@
+# Install the base requirements first:
+#   python -m pip install -r requirements.txt
+#
+# Biohub's official ESMFold2 client is currently installed from this pinned
+# Git revision, following the upstream README.
+esm @ git+https://github.com/Biohub/esm.git@c94ed8d
