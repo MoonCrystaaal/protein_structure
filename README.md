@@ -58,6 +58,10 @@ $env:BIOHUB_API_TOKEN = "발급받은 토큰"
 
 API 토큰은 코드나 저장소에 기록하지 않습니다.
 
+실제 RCSB 구조 검색과 ESMFold2 fallback 실행 예시는
+[`examples/RUN_EXAMPLE.md`](examples/RUN_EXAMPLE.md)에 입력 FASTA,
+명령어, 검색 이력 및 결과 해석과 함께 정리되어 있습니다.
+
 ## 실행
 
 서열 직접 입력:
