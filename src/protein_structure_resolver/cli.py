@@ -8,6 +8,7 @@ from typing import Sequence
 
 from .config import METADATA_SCHEMA_VERSION, RESOLVER_VERSION
 from .errors import OutputExistsError, ResolverError
+from .foldseek_3di import extract_3di
 from .resolver import resolve
 from .storage import OutputTransaction, utc_now, write_metadata
 
@@ -58,6 +59,21 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="기존 exact 구조가 없을 때 ESMFold2 실행을 생략합니다.",
     )
+    parser.add_argument(
+        "--with-3di",
+        action="store_true",
+        help=(
+            "구조 해결 성공 후 Foldseek로 아미노산 및 3Di FASTA를 "
+            "추가 생성합니다. 유사도 검색은 수행하지 않습니다."
+        ),
+    )
+    parser.add_argument(
+        "--foldseek-bin",
+        help=(
+            "Foldseek 실행 파일 이름 또는 경로. 생략하면 네이티브 환경을 "
+            "먼저 찾고 Windows에서는 WSL도 확인합니다."
+        ),
+    )
     args = parser.parse_args(argv)
     if args.no_cache and args.refresh_cache:
         parser.error("--no-cache와 --refresh-cache는 함께 사용할 수 없습니다.")
@@ -87,6 +103,21 @@ def main(argv: Sequence[str] | None = None) -> int:
                 raise OSError("임시 출력 디렉터리를 만들지 못했습니다.")
             try:
                 metadata = resolve(args, output=transaction.stage)
+                if (
+                    metadata.get("status") == "success"
+                    and bool(getattr(args, "with_3di", False))
+                ):
+                    LOGGER = logging.getLogger(__name__)
+                    LOGGER.info("Foldseek 3Di 구조 알파벳 추출")
+                    structure_path = transaction.stage / str(
+                        metadata["structure_file"]
+                    )
+                    metadata["structure_alphabet"] = extract_3di(
+                        structure_path,
+                        transaction.stage,
+                        source=metadata.get("source"),
+                        foldseek_bin=getattr(args, "foldseek_bin", None),
+                    )
             except ResolverError as exc:
                 error = {
                     "schema_version": METADATA_SCHEMA_VERSION,

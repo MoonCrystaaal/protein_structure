@@ -21,6 +21,7 @@ protein_structure_resolver/
 │   ├── rcsb.py          # 실험 구조 검색·평가·선택
 │   ├── alphafold.py     # AlphaFold DB exact 모델 검색
 │   ├── esmfold2.py      # ESMFold2 API 예측과 신뢰도 요약
+│   ├── foldseek_3di.py  # 선택적 Foldseek 3Di 구조 알파벳 추출
 │   ├── http_client.py   # HTTP 세션과 재시도
 │   ├── storage.py       # mmCIF 검증과 원자적 저장
 │   ├── cache.py         # SHA-256 성공 결과 캐시
@@ -49,7 +50,8 @@ python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
-ESMFold2까지 사용할 때만 공식 Biohub SDK를 추가로 설치합니다.
+Gemmi는 기본 의존성으로 함께 설치됩니다. ESMFold2까지 사용할 때만
+공식 Biohub SDK를 추가로 설치합니다.
 
 ```powershell
 python -m pip install -r requirements-esmfold2.txt
@@ -57,6 +59,10 @@ $env:BIOHUB_API_TOKEN = "발급받은 토큰"
 ```
 
 API 토큰은 코드나 저장소에 기록하지 않습니다.
+
+3Di 출력을 사용할 때는 별도로 Foldseek 실행 파일이 필요합니다. Windows
+환경에서는 WSL에 설치된 `foldseek`도 자동으로 찾습니다. 이 프로젝트가
+자동으로 설치한 현재 로컬 경로는 `/home/dayou/.local/bin/foldseek`입니다.
 
 실제 RCSB 구조 검색과 ESMFold2 fallback 실행 예시는
 [`examples/RUN_EXAMPLE.md`](examples/RUN_EXAMPLE.md)에 입력 FASTA,
@@ -105,6 +111,55 @@ outputs/<run-name>/
 └── metadata.json
 ```
 
+구조 해결 뒤 Foldseek 3Di 구조 알파벳도 생성하려면 `--with-3di`를
+추가합니다.
+
+```powershell
+python sequence_to_structure.py `
+  --fasta protein.fasta `
+  --output outputs\protein_with_3di `
+  --with-3di
+```
+
+이 경우 성공 출력은 다음과 같습니다.
+
+```text
+outputs/<run-name>/
+├── structure.cif
+├── structure_aa.fasta
+├── structure_3di.fasta
+└── metadata.json
+```
+
+- `structure_aa.fasta`: Foldseek가 구조에서 읽은 아미노산 서열
+- `structure_3di.fasta`: 각 잔기에 대응하는 3Di 구조 알파벳
+- `metadata.json.structure_alphabet`: Foldseek 버전, 실행 환경, 레코드
+  수, AA/3Di 길이 검증 및 Gemmi 정규화 여부
+
+이 기능은 `createdb`, `lndb`, `convert2fasta`만 사용하며 구조 유사도
+검색은 수행하지 않습니다. RCSB 결과는 전체 PDB entry이므로 여러 protein
+chain이 있으면 FASTA 레코드도 여러 개 생성됩니다. AlphaFold DB와
+ESMFold2 단일 chain 결과는 일반적으로 한 레코드입니다.
+
+구조 캐시에는 기존처럼 `structure.cif`와 resolver metadata만 저장합니다.
+따라서 구조 캐시가 적중하더라도 `--with-3di`를 지정한 실행에서는 현재
+Foldseek로 FASTA 두 개를 다시 생성합니다.
+
+ESMFold2 mmCIF는 현재 Foldseek가 요구하는 polymer 메타데이터가 충분하지
+않을 수 있습니다. 이 출처에 한해서 Gemmi로 임시 PDB를 만든 뒤 3Di를
+추출합니다. 원본 `structure.cif`와 원자 좌표는 수정하지 않으며 임시
+PDB는 작업이 끝나면 삭제합니다.
+
+자동 탐색 대신 실행 파일을 직접 지정할 수도 있습니다.
+
+```powershell
+python sequence_to_structure.py `
+  --fasta protein.fasta `
+  --output outputs\protein_with_3di `
+  --with-3di `
+  --foldseek-bin /home/dayou/.local/bin/foldseek
+```
+
 출력은 같은 상위 디렉터리의 임시 폴더에서 완성된 뒤 최종 경로로
 이동합니다. 따라서 실패한 실행의 `metadata.json`과 이전 실행의
 `structure.cif`가 섞이지 않습니다.
@@ -151,6 +206,7 @@ protein-structure-resolver `
 - 선택 구조의 modified monomer와 좌표가 없는 잔기 구간
 - 실험 구조 검증 지표 또는 예측 구조 신뢰도
 - ESMFold2 반환 서열·pLDDT 개수·pTM 범위·유한 좌표 검증 결과
+- 선택 시 Foldseek 3Di 추출과 Gemmi 정규화 검증 결과
 - 캐시 적중·저장 상태
 
 실험 구조 파일은 annotation보다 먼저 저장합니다. 좌표 결손 또는
@@ -199,4 +255,16 @@ python -m unittest discover -s tests -v
 `not_found` 결과를 반환합니다.
 
 복합체 입력, 유사 서열 구조 대체, CDR/interface 분석, 자동 chain 추출,
-biological assembly 선택은 현재 범위에 포함하지 않습니다.
+biological assembly 선택 및 Foldseek 유사도 검색은 현재 범위에 포함하지
+않습니다.
+
+
+## 제출 코드와 데이터 범위
+
+기존 저장소: https://github.com/MoonCrystaaal/protein_structure
+
+보고서에는 위 URL과 실제 제출 커밋 해시를 함께 기록합니다. 현재 작업 트리의 변경 사항은 커밋하고 push한 뒤에 원격 저장소에서 확인할 수 있습니다.
+
+이 패키지는 입력 전체 서열의 exact 구조 확보와 선택적 3Di 추출을 수행합니다. UniProt Chain 주석 기반 mature chain 절단과 PDB 표준화는 별도의 전처리 과정으로 다룹니다. `filter_pdb_cb.py`는 원자 축약 실험용 보조 스크립트이며, SurfaceID 표준 입력 생성을 위한 통합 단계로 사용한 것은 아닙니다.
+
+로컬 가상환경(`bin`, `include`, `lib`, `lib64`, `pyvenv.cfg`), 개발 임시 폴더, 캐시, outputs 및 자동 생성 그림은 버전 관리에서 제외합니다. 문서, 예제 FASTA, 테스트, 그림 생성 스크립트는 유지합니다. API 토큰은 환경변수로만 전달합니다.

@@ -8,3 +8,67 @@ outputs/
 cache/
 result*/
 *.part
+
+# Submission cleanup
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+# Credentials are local; examples may be committed
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+*credentials*.json
+secrets.json
+.aws/
+.ssh/
+# Editors and temporary files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+~$*
+*.swp
+*.tmp
+*.part
+*.log
+*.backup-*
+*.backup*
+backups/
+# A Linux virtual environment was created in the repository root
+/bin/
+/include/
+/lib/
+/lib64
+/pyvenv.cfg
+# Local development and container build staging
+/.codex_stage/
+/.codex-remote-edit/
+/.codex-work/
+/.surfaceid-*/
+# Generated report figures, local analysis notes, and downloaded responses
+/docs/*.png
+/docs/*.pdf
+/docs/*.svg
+/docs/pipeline_diagram_*
+/docs/pipeline_report_*
+/docs/render_pipeline_diagram_*
+/docs/make_7pch_figure.py
+/docs/allergen_afdb_*/
+/docs/allergen_afdb_20260913/alphafold_api_*.json
+/docs/allergen_afdb_20260913/uniprot_*.json
+/filter_pdb_cb.py

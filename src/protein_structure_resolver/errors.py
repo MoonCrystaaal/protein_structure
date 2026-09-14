@@ -26,6 +26,11 @@ class PredictionUnavailableError(ResolverError):
     stage = "esmfold2"
 
 
+class FoldseekExtractionError(ResolverError):
+    error_code = "FOLDSEEK_3DI_FAILED"
+    stage = "foldseek_3di"
+
+
 class OutputExistsError(ResolverError):
     error_code = "OUTPUT_EXISTS"
     stage = "output"

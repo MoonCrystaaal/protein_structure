@@ -97,6 +97,9 @@ def mark_cache_hit(
     stored_at_utc: str | None,
 ) -> dict[str, Any]:
     result = deepcopy(metadata)
+    # 구조는 캐시에서 재사용하더라도 metadata를 내보내는 실행기는 현재
+    # 버전이므로 과거 캐시의 resolver 버전을 그대로 노출하지 않습니다.
+    result["resolver_version"] = RESOLVER_VERSION
     result["cache"] = {
         "enabled": True,
         "hit": True,

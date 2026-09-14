@@ -212,3 +212,27 @@ outputs/example_esmfold2/structure.cif
 구조 예제가 아니라 **fallback 및 응답 검증 경로를 확인하기 위한 실행
 예제**다. 실제 연구에 사용할 때는 residue별 pLDDT, pTM 및 낮은 신뢰도
 구간을 함께 해석해야 한다.
+
+## 선택 사항: 구조에서 3Di 알파벳 추출
+
+기존 명령에 `--with-3di`만 추가한다.
+
+```powershell
+python sequence_to_structure.py `
+    --fasta .\examples\inputs\example_esmfold2.fasta `
+    --output .\outputs\example_esmfold2_with_3di `
+    --with-3di `
+    --verbose
+```
+
+성공 시 `structure.cif`, `metadata.json`에 다음 두 파일이 추가된다.
+
+```text
+structure_aa.fasta
+structure_3di.fasta
+```
+
+실제 검증에서 ESMFold2 40 residues 구조는 Gemmi 0.7.5로 임시 PDB로
+정규화된 뒤 WSL Foldseek에서 AA 40자와 3Di 40자로 변환되었다. 원본
+`structure.cif`는 변경되지 않았다. 이 단계는 유사도 검색을 수행하지
+않는다.
