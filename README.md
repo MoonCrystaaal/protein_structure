@@ -1,5 +1,6 @@
 # Protein Structure Resolver
 
+단백질 서열을 입력하면 구조 파일을 반환받는 툴 입니다. 
 단일 단백질 서열을 다음 우선순위로 구조 파일에 연결합니다.
 
 1. RCSB PDB의 전역(global) 100% exact 실험 구조
